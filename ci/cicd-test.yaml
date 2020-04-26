@@ -1,0 +1,50 @@
+# [START cloudbuild]
+steps:
+- name: 'node:13-slim'
+  id: Test
+  entrypoint: npm
+  args: ['test']
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: Build
+  args:
+  - 'build'
+  - '-t'
+  - 'eu.gcr.io/$PROJECT_ID/payment:$SHORT_SHA'
+  - '.'
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: Push
+  args:
+  - 'push'
+  - 'eu.gcr.io/$PROJECT_ID/payment:$SHORT_SHA'
+
+- name: 'gcr.io/cloud-builders/npm'
+  id: Build Templates
+  entrypoint: npm
+  args: 
+  - 'run'
+  - 'create-files'
+  env:
+  - 'PROJECT_ID=$PROJECT_ID'
+  - 'SHORT_SHA=$SHORT_SHA'
+
+- name: 'gcr.io/cloud-builders/gsutil'
+  id: Upload Manifests
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+    gsutil cp -r manifests gs://final-project-configuration-files
+
+- name: 'gcr.io/cloud-builders/gke-deploy'
+  id: Deploy Test App
+  args:
+  - 'apply'
+  - '-f'
+  - 'gs://final-project-configuration-files/manifests/test-$SHORT_SHA-payment-manifest.yaml'
+  - '-c'
+  - 'my-final-project-cluster' 
+  - '-l' 
+  - 'europe-west1-b'
+# [END cloudbuild]

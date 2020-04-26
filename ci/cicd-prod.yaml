@@ -1,0 +1,11 @@
+steps:
+- name: 'gcr.io/cloud-builders/gke-deploy'
+  id: Deploy Test App
+  args:
+  - 'apply'
+  - '-f'
+  - 'gs://final-project-configuration-files/manifests/prod-$SHORT_SHA-payment-manifest.yaml'
+  - '-c'
+  - 'my-final-project-cluster' 
+  - '-l' 
+  - 'europe-west1-b'
